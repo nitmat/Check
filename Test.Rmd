@@ -1,0 +1,124 @@
+---
+title: "Data Wrangling With R - Week 4"
+author: "Nitin"
+date: "November 8, 2016"
+output: 
+    html_document:
+       theme: lumen 
+---
+
+#Synopsis
+This file encompasses the Week 4 Homework of the Data Wrangling with R class. This week concentrates on exploring the gapminder dataset availble on CRAN
+
+```{r message=FALSE}
+#Load relevant libraries
+library(gapminder)
+library(dplyr)
+library(ggplot2)
+library(ggthemes)
+```
+
+
+```{r include=FALSE}
+?gapminder
+```
+
+#Source Code  
+country: factor with 142 levels  
+continent: factor with 5 levels  
+year: ranges from 1952 to 2007 in increments of 5 years  
+lifeExp: life expectancy at birth, in years  
+pop: population  
+gdpPercap: GDP per capita  
+
+#Data Description
+
+```{r include=FALSE}
+str(gapminder_unfiltered)
+```
+
+###Basic Data Structure and Summary Statistics
+The data set includes 3313 observations of 6 variables  
+The variables include country, continent, year, lifeExp, pop and gdpPercap  
+
+```{r }
+summary(gapminder_unfiltered)
+#psych::describe(gapminder_unfiltered)
+#Hmisch::describe(gapminder_unfiltered)
+```
+
+##Exploratory Data Analysis {.tabset}
+
+###What is the distribution of GDP per capita across all countries?
+
+```{r}
+gapminder_unfiltered %>% 
+  filter(year == 2007) %>%
+  ggplot(aes(gdpPercap))+geom_histogram(binwidth   = 2000, color = "white") +
+  labs(title = "Histogram of GDP Per Capita") +
+  labs(x="GDP Per Capita" , y = "Frequency") +
+  geom_vline(aes(xintercept=mean(gdpPercap)),
+            color="grey", linetype="dashed", size=0.5) 
+```
+
+We observe that the GDP Per Capita is heavily right skewed.  
+
+###How do the distributions differ across the different continents?
+
+```{r}
+gapminder_unfiltered %>% 
+  filter(year == 2007) %>%
+  ggplot(aes(x = continent, y = gdpPercap, fill = continent))+geom_boxplot() 
+```
+
+We observe that the distributions are quite different across continents with Asia showcasing the maximum range and Africa with the least range.  
+Europe seems to have the highes mean while Asia showcases the largest GDP Per capita  
+
+###What are the top 10 countries with the largest GDP per capita?
+
+```{r}
+gapminder_unfiltered %>% 
+  filter(year == 2007) %>%
+  arrange(desc(gdpPercap)) %>%
+  top_n(n = 10, gdpPercap) %>%
+  ggplot(aes(x = reorder(country, gdpPercap), y = gdpPercap, fill = continent)) + geom_bar(stat = "identity", width = 0.7) + coord_flip() +
+labs(title = "GDP Per Capita Over the Ages (India)") +
+  labs(x = "Country", y = "GDP Per Capita") 
+```
+
+We observe that primarily Asian countries represent the top 10 countries with highest GDP Per capita
+
+
+###Plot the GDP per capita for your country of origin for all years available
+
+```{r}
+gapminder_unfiltered %>% 
+  filter(country == "India") %>%
+  ggplot(aes(x = year, y = gdpPercap)) + 
+  geom_line() +
+  labs(title = "GDP Per Capita Over the Ages (India)") +
+  labs(x = "Year", y = "GDP Per Capita") +
+  geom_point()
+```
+
+We observe an exponential growth over the past few decades
+
+###What was the percent growth (or decline) in GDP per capita in 2007?
+
+```{r}
+growth_rate <- gapminder_unfiltered %>% 
+  filter(country == "India") %>% mutate(Change = (gdpPercap - lag(gdpPercap))/(lag(gdpPercap)) * 100) %>%
+  select(Country = country,Year = year, Change)
+growth_rate
+```
+
+We observe a growth of 40.38%  
+
+###What has been the historical growth (or decline) in GDP per capita for your country?
+
+```{r}
+mean(growth_rate$Change, na.rm = TRUE)
+```
+
+Historically India has been growing at 15%
+
